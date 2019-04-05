@@ -4,6 +4,11 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <cassert>
 
+#include <pcl/filters/frustum_culling.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include "ouster/os1.h"
 #include "ouster/os1_packet.h"
 #include "ouster/os1_util.h"
@@ -66,6 +71,42 @@ sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
     msg.header.frame_id = frame;
     msg.header.stamp.fromNSec(timestamp.count());
     return msg;
+}
+
+sensor_msgs::PointCloud2 publishFovTrimmedCloud(float hfov, float vfov, Eigen::Matrix4f ousterPose, sensor_msgs::PointCloud2 msg) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPtr(
+      new pcl::PointCloud<pcl::PointXYZ>);
+  //Converting from ROS PointCloud2 to pcl::PointCloud<pcl::PointXYZ>
+  //Note that converting to CloudOS1 causes linking error since precompiled pcl library doesn't know about CloudOS1 datatype.
+  pcl::fromROSMsg(msg, *cloudPtr);
+  //from http://docs.pointclouds.org/trunk/classpcl_1_1_frustum_culling.html
+  pcl::FrustumCulling<pcl::PointXYZ> fc; 
+  fc.setInputCloud(cloudPtr);
+  fc.setVerticalFOV(vfov);
+  fc.setHorizontalFOV(hfov);
+  //fc.setHorizontalFOV(120);
+  
+  fc.setNearPlaneDistance(0.01);
+  fc.setFarPlaneDistance(100);
+  Eigen::Matrix4f ouster2frustum; // this thing assusms pose x-forward, y-up, z right. rotate
+                              // -90 along x-axis to align with x-forward, y-left, z-up.
+  ouster2frustum << -1, 0, 0, 0, 
+                 0, -1, 0, 0, 
+                 0, 0, 1, 0, 
+                 0, 0, 0, 1;
+  // init2lidar <<  1, 0, 0, 0,
+  //                0, 0, -1, 0,
+  //                0, 1, 0, 0,
+  //                0, 0, 0, 1;
+  Eigen::Matrix4f pose_new = ousterPose * ouster2frustum;
+  fc.setCameraPose(pose_new);
+  pcl::PointCloud<pcl::PointXYZ> filtered_pc;
+  fc.filter(filtered_pc);
+  sensor_msgs::PointCloud2 ret;
+  pcl::toROSMsg(filtered_pc, ret);
+  ret.header.frame_id = msg.header.frame_id;
+  ret.header = msg.header;
+  return ret;
 }
 
 geometry_msgs::TransformStamped transform_to_tf_msg(

@@ -24,6 +24,9 @@
     <remap from="~/os1_config" to="/os1_node/os1_config"/>
     <remap from="~/lidar_packets" to="/os1_node/lidar_packets"/>
     <remap from="~/imu_packets" to="/os1_node/imu_packets"/>
+    <param name="enable_trim" value="true"/>
+    <param name="hfov_trim" value="179.0"/>
+    <param name="vfov_trim" value="125.0"/>
   </node>
 
   <node if="$(arg viz)" pkg="ouster_ros" name="viz_node" type="viz_node" output="screen" required="true">

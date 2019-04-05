@@ -16,11 +16,13 @@
 #include "ouster_ros/PacketMsg.h"
 #include "ouster_ros/point_os1.h"
 
+
 namespace ouster_ros {
 namespace OS1 {
 
 using CloudOS1 = pcl::PointCloud<PointOS1>;
 using ns = std::chrono::nanoseconds;
+
 
 /**
  * Read an imu packet into a ROS message. Blocks for up to a second if no data
@@ -69,5 +71,7 @@ sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
 geometry_msgs::TransformStamped transform_to_tf_msg(
     const std::vector<double>& mat, const std::string& frame,
     const std::string& child_frame);
+sensor_msgs::PointCloud2 publishFovTrimmedCloud(float hfov, float vfov, Eigen::Matrix4f ousterPose, sensor_msgs::PointCloud2 msg);
+
 }
 }
