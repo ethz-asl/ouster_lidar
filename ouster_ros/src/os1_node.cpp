@@ -61,12 +61,15 @@ int main(int argc, char** argv) {
 
     bool enable_trim;
     float hfov_trim, vfov_trim;
+    float ouster_yaw;
     nh.param<bool>("enable_trim", enable_trim, (bool)false);
     auto lidar_trimmed_pub =
         nh.advertise<sensor_msgs::PointCloud2>("trimmed_points", 10);
     if (enable_trim) {
       nh.param<float>("hfov_trim", hfov_trim, (float)120);
       nh.param<float>("vfov_trim", vfov_trim, (float)120);
+      nh.param<float>("ouster_yaw", ouster_yaw, (float)0);
+
     }
 
     auto lidar_pub = nh.advertise<sensor_msgs::PointCloud2>("points", 10);
@@ -80,9 +83,10 @@ int main(int argc, char** argv) {
             lidar_pub.publish(msg);
 
             if (enable_trim) {
-              Eigen::Matrix4f lidarPose = Eigen::Matrix4f::Identity();
+              Eigen::Affine3f lidarPose(Eigen::AngleAxisf(ouster_yaw*(M_PI/180.0), Eigen::Vector3f::UnitZ()));
+
               lidar_trimmed_pub.publish(ouster_ros::OS1::publishFovTrimmedCloud(
-                  vfov_trim, hfov_trim, lidarPose, msg));
+                  vfov_trim, hfov_trim, lidarPose.matrix(), msg));
             }
           }
         });
