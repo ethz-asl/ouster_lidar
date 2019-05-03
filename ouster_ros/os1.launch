@@ -16,6 +16,10 @@
     <param name="replay" value="$(arg replay)"/>
   </group>
 
-  <node pkg="ouster_ros" type="os1_node" name="os1_node" output="screen" required="true"/>
+  <node pkg="ouster_ros" type="os1_node" name="os1_node" output="screen" required="true">
+    <param name="enable_trim" value="true"/>
+    <param name="hfov_trim" value="179.0"/>
+    <param name="vfov_trim" value="125.0"/>
+  </node>
 
 </launch>

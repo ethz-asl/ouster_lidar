@@ -44,7 +44,7 @@ bool validTimestamp(const ros::Time& msg_time) {
                << ". Rejecting measurement.");
     return false;
   }
-  
+
   return true;
 }
 
@@ -59,6 +59,16 @@ int main(int argc, char** argv) {
     auto os1_imu_port = nh.param("os1_imu_port", -1);
     auto replay_mode = nh.param("replay", true);
 
+    bool enable_trim;
+    float hfov_trim, vfov_trim;
+    nh.param<bool>("enable_trim", enable_trim, (bool)false);
+    auto lidar_trimmed_pub =
+        nh.advertise<sensor_msgs::PointCloud2>("trimmed_points", 10);
+    if (enable_trim) {
+      nh.param<float>("hfov_trim", hfov_trim, (float)120);
+      nh.param<float>("vfov_trim", vfov_trim, (float)120);
+    }
+
     auto lidar_pub = nh.advertise<sensor_msgs::PointCloud2>("points", 10);
     auto imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 10);
 
@@ -68,6 +78,12 @@ int main(int argc, char** argv) {
               ouster_ros::OS1::cloud_to_cloud_msg(cloud, scan_ts);
           if (validTimestamp(msg.header.stamp)) {
             lidar_pub.publish(msg);
+
+            if (enable_trim) {
+              Eigen::Matrix4f lidarPose = Eigen::Matrix4f::Identity();
+              lidar_trimmed_pub.publish(ouster_ros::OS1::publishFovTrimmedCloud(
+                  vfov_trim, hfov_trim, lidarPose, msg));
+            }
           }
         });
 

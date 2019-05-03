@@ -108,5 +108,7 @@ void spin(const ouster::OS1::client& cli,
  */
 std::function<void(const PacketMsg&)> batch_packets(
     ns scan_dur, const std::function<void(ns, const CloudOS1&)>& f);
+
+sensor_msgs::PointCloud2 publishFovTrimmedCloud(float hfov, float vfov, Eigen::Matrix4f ousterPose, sensor_msgs::PointCloud2 msg);
 }
 }
