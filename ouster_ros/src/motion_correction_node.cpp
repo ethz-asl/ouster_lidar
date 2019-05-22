@@ -48,6 +48,10 @@ class MotionCorrectionNode {
     std::shared_ptr<pcl::PointCloud<PointOS1>> pointcloud_pcl_in =
         std::make_shared<pcl::PointCloud<PointOS1>>();
     pcl::fromROSMsg(*pointcloud_msg_in, *pointcloud_pcl_in);
+
+    //Adjust for pointcloud -- IMU timing from lidarAlign
+    pointcloud_pcl_in->header.stamp += u_int64_t(lidar_timing_offset * 1000000);
+
     motion_correction_->addPointCloudToQueue(pointcloud_pcl_in);
 
     pcl::PointCloud<pcl::PointXYZI> pointcloud_pcl_out;
@@ -61,6 +65,8 @@ class MotionCorrectionNode {
   MotionCorrectionNode(const ros::NodeHandle& nh,
                        const ros::NodeHandle nh_private)
       : nh_(nh), nh_private_(nh_private) {
+
+    nh_private_.param("lidar_timing_offset", lidar_timing_offset, 0.0);
     int pointcloud_queue_length;
     nh_private_.param("pointcloud_queue_length", pointcloud_queue_length, 100);
     bool reflectivity_as_intensity;
@@ -91,6 +97,8 @@ class MotionCorrectionNode {
   ros::Timer tf_timer_;
   tf::TransformListener tf_listener_;
 
+  double lidar_timing_offset;
+
   std::string tf_odom_frame_;
   std::string tf_sensor_frame_;
   std::shared_ptr<MotionCorrection> motion_correction_;
@@ -103,7 +111,6 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "ouster_motion_compensation");
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
-
   ouster_ros::OS1::MotionCorrectionNode node(nh, nh_private);
 
   ros::spin();
