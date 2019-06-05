@@ -68,68 +68,6 @@ sensor_msgs::PointCloud2 cloud_to_cloud_msg(const CloudOS1& cloud, ns timestamp,
     return msg;
 }
 
-//<<<<<<< HEAD
-//static PointOS1 nth_point(int ind, const uint8_t* col_buf) {
-//    float h_angle_0 = col_h_angle(col_buf);
-//    auto tte = trig_table[ind];
-//    const uint8_t* px_buf = nth_px(ind, col_buf);
-//    float r = px_range(px_buf) / 1000.0;
-//    float h_angle = tte.beam_azimuth_angles + h_angle_0;
-//
-//    PointOS1 point;
-//    point.reflectivity = px_reflectivity(px_buf);
-//    point.intensity = px_signal_photons(px_buf);
-//    point.x = -r * tte.cos_beam_altitude_angles * cosf(h_angle);
-//    point.y = r * tte.cos_beam_altitude_angles * sinf(h_angle);
-//    point.z = r * tte.sin_beam_altitude_angles;
-//    point.ring = ind;
-//
-//    return point;
-//}
-//void add_packet_to_cloud(ns scan_start_ts, ns scan_duration,
-//                         const PacketMsg& pm, CloudOS1& cloud) {
-//    const uint8_t* buf = pm.buf.data();
-//    for (int icol = 0; icol < columns_per_buffer; icol++) {
-//        const uint8_t* col_buf = nth_col(icol, buf);
-//        int32_t ts = col_timestamp(col_buf) - scan_start_ts.count();
-//
-//        for (int ipx = 0; ipx < pixels_per_column; ipx++) {
-//            auto p = nth_point(ipx, col_buf);
-//            p.time_offset_us = ts/1000;
-//            cloud.push_back(p);
-//        }
-//    }
-//}
-//
-//void spin(const client& cli,
-//          const std::function<void(const PacketMsg& pm)>& lidar_handler,
-//          const std::function<void(const PacketMsg& pm)>& imu_handler) {
-//    PacketMsg lidar_packet, imu_packet;
-//    lidar_packet.buf.resize(lidar_packet_bytes + 1);
-//    imu_packet.buf.resize(imu_packet_bytes + 1);
-//
-//    while (ros::ok()) {
-//        auto state = poll_client(cli);
-//        if (state & ERROR) {
-//            ROS_ERROR("spin: poll_client returned error");
-//            return;
-//        }
-//        if (state & LIDAR_DATA) {
-//            if (read_lidar_packet(cli, lidar_packet.buf.data()))
-//                lidar_handler(lidar_packet);
-//        }
-//        if (state & IMU_DATA) {
-//            if (read_imu_packet(cli, imu_packet.buf.data()))
-//                imu_handler(imu_packet);
-//        }
-//        ros::spinOnce();
-//    }
-//}
-//
-//static ns nearest_scan_dur(ns scan_dur, ns ts) {
-//    return ns((ts.count() / scan_dur.count()) * scan_dur.count());
-//};
-//=======
 geometry_msgs::TransformStamped transform_to_tf_msg(
     const std::vector<double>& mat, const std::string& frame,
     const std::string& child_frame) {
