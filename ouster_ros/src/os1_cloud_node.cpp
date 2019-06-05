@@ -35,10 +35,14 @@ int main(int argc, char **argv) {
   auto sensor_frame = tf_prefix + "os1_sensor";
   auto imu_frame = tf_prefix + "os1_imu";
   auto lidar_frame = tf_prefix + "os1_lidar";
-
+  
+  auto os1_config = nh.param("os1_config", std::string{});
+  if(os1_config.empty()){
+    os1_config = "os1_config";
+    ROS_WARN("[OS1 Cloud Node] Setting os1_config to default");
+  }
   ouster_ros::OS1ConfigSrv cfg{};
-
-  auto client = nh.serviceClient<ouster_ros::OS1ConfigSrv>("os1_config");
+  auto client = nh.serviceClient<ouster_ros::OS1ConfigSrv>(os1_config);
   client.waitForExistence();
   if (!client.call(cfg)) {
     ROS_ERROR("Calling os1 config service failed");
