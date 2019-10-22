@@ -38,3 +38,23 @@ target_link_libraries(os1_node ouster_ros ${catkin_LIBRARIES})
 
 add_executable(motion_correction_node src/motion_correction_node.cpp src/motion_correction.cpp)
 target_link_libraries(motion_correction_node ${catkin_LIBRARIES})
+
+############
+## INSTALL ##
+#############
+
+install(
+        TARGETS ${PROJECT_NAME} os1_node motion_correction_node
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        )
+
+install(
+        FILES os1.launch viz.rviz
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
