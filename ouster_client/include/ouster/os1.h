@@ -35,7 +35,7 @@ enum class lidar_mode {
     MODE_INVALID
 };
 
-enum timestamp_mode {
+enum class timestamp_mode {
     TIME_FROM_INTERNAL_OSC = 1,
     TIME_FROM_SYNC_PULSE_IN,
     TIME_FROM_PTP_1588
@@ -146,7 +146,7 @@ std::shared_ptr<client> init_client(int lidar_port = 7502, int imu_port = 7503);
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
                                     lidar_mode mode = lidar_mode::MODE_1024x10,
-                                    timestamp_mode ts_mode = TIME_FROM_INTERNAL_OSC,
+                                    timestamp_mode ts_mode = timestamp_mode::TIME_FROM_INTERNAL_OSC,
                                     int lidar_port = 7502u, int imu_port = 7503u);
 
 /**

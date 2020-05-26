@@ -48,9 +48,9 @@ const std::array<std::pair<lidar_mode, std::string>, 5> lidar_mode_strings = {
 
 const std::array<std::pair<timestamp_mode, std::string>, 3>
     timestamp_mode_strings = {
-        {{TIME_FROM_INTERNAL_OSC, "TIME_FROM_INTERNAL_OSC"},
-         {TIME_FROM_SYNC_PULSE_IN, "TIME_FROM_SYNC_PULSE_IN"},
-         {TIME_FROM_PTP_1588, "TIME_FROM_PTP_1588"}}};
+        {{timestamp_mode::TIME_FROM_INTERNAL_OSC, "TIME_FROM_INTERNAL_OSC"},
+         {timestamp_mode::TIME_FROM_SYNC_PULSE_IN, "TIME_FROM_SYNC_PULSE_IN"},
+         {timestamp_mode::TIME_FROM_PTP_1588, "TIME_FROM_PTP_1588"}}};
 
 int32_t get_sock_port(int sock_fd) {
     struct sockaddr_storage ss;
