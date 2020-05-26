@@ -3,17 +3,30 @@
  * @brief Example node to publish raw OS-1 output on ROS topics
  *
  * ROS Parameters
+ * scan_dur_ns: nanoseconds to batch lidar packets before publishing a cloud
  * os1_hostname: hostname or IP in dotted decimal form of the sensor
  * os1_udp_dest: hostname or IP where the sensor will send data packets
  * os1_lidar_port: port to which the sensor should send lidar data
  * os1_imu_port: port to which the sensor should send imu data
+ * replay_mode: when true, the node will listen on ~/lidar_packets and
+ *   ~/imu_packets for data instead of attempting to connect to a sensor
  */
 
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <pcl_conversions/pcl_conversions.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include "ouster/os1_packet.h"
 #include "ouster/os1_util.h"
@@ -21,6 +34,7 @@
 #include "ouster_ros/PacketMsg.h"
 #include "ouster_ros/os1_ros.h"
 
+using ns = std::chrono::nanoseconds;
 using PacketMsg = ouster_ros::PacketMsg;
 using OS1ConfigSrv = ouster_ros::OS1ConfigSrv;
 namespace OS1 = ouster::OS1;
@@ -39,7 +53,7 @@ void populate_metadata_defaults(OS1::sensor_info& info,
         ROS_WARN("Firmware < %s not supported; output may not be reliable",
                  to_string(OS1::min_version).c_str());
 
-    if (!info.mode) {
+    if (info.mode == OS1::lidar_mode::MODE_INVALID) {
         ROS_WARN(
             "Lidar mode not found in metadata; output may not be reliable");
         info.mode = OS1::lidar_mode_of_string(specified_lidar_mode);
@@ -126,6 +140,21 @@ int connection_loop(ros::NodeHandle& nh, OS1::client& cli) {
     return EXIT_SUCCESS;
 }
 
+bool validTimestamp(const ros::Time& msg_time) {
+  const ros::Duration kMaxTimeOffset(1.0);
+
+  const ros::Time now = ros::Time::now();
+  if (msg_time < (now - kMaxTimeOffset)) {
+    ROS_WARN_STREAM_THROTTLE(
+        1, "OS1 clock is currently not in sync with host. Current host time: "
+               << now << " OS1 message time: " << msg_time
+               << ". Rejecting measurement.");
+    return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char** argv) {
     ros::init(argc, argv, "os1_node");
     ros::NodeHandle nh("~");
@@ -147,11 +176,12 @@ int main(int argc, char** argv) {
     // empty indicates "not set" since roslaunch xml can't optionally set params
     auto hostname = nh.param("os1_hostname", std::string{});
     auto udp_dest = nh.param("os1_udp_dest", std::string{});
-    auto lidar_port = nh.param("os1_lidar_port", 0);
-    auto imu_port = nh.param("os1_imu_port", 0);
+    auto lidar_port = nh.param("os1_lidar_port", 7501);
+    auto imu_port = nh.param("os1_imu_port", 7502);
     auto replay = nh.param("replay", false);
     auto lidar_mode = nh.param("lidar_mode", std::string{});
     auto timestamp_mode = nh.param("timestamp_mode", std::string{});
+    auto scan_dur = ns(nh.param("scan_dur_ns", 100000000));
 
     // fall back to metadata file name based on hostname, if available
     auto meta_file = nh.param("metadata", std::string{});
@@ -160,10 +190,10 @@ int main(int argc, char** argv) {
     if (lidar_mode.size()) {
         if (replay) ROS_WARN("Lidar mode set in replay mode. May be ignored");
     } else {
-        lidar_mode = OS1::to_string(OS1::MODE_1024x10);
+        lidar_mode = OS1::to_string(OS1::lidar_mode::MODE_1024x10);
     }
 
-    if (!OS1::lidar_mode_of_string(lidar_mode)) {
+    if (OS1::lidar_mode_of_string(lidar_mode) == OS1::lidar_mode::MODE_INVALID) {
         ROS_ERROR("Invalid lidar mode %s", lidar_mode.c_str());
         return EXIT_FAILURE;
     }

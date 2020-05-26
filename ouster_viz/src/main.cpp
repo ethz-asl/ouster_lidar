@@ -56,12 +56,13 @@ std::string read_metadata(const std::string& meta_file) {
 int main(int argc, char** argv) {
     int W = 1024;
     int H = OS1::pixels_per_column;
-    OS1::lidar_mode mode = OS1::MODE_1024x10;
+    OS1::lidar_mode mode = OS1::lidar_mode::MODE_1024x10;
     bool do_config = true;  // send tcp commands to configure sensor
     std::string metadata{};
     int lidar_port = 0;
     int imu_port = 0;
 
+    
     try {
         int c = 0;
         while ((c = getopt(argc, argv, "hm:l:i:f:")) != -1) {
@@ -72,7 +73,7 @@ int main(int argc, char** argv) {
                     break;
                 case 'm':
                     mode = OS1::lidar_mode_of_string(optarg);
-                    if (mode) {
+                    if (mode != OS1::lidar_mode::MODE_INVALID) {
                         W = OS1::n_cols_of_lidar_mode(mode);
                     } else {
                         std::cout << "Lidar Mode must be 512x10, 512x20, "

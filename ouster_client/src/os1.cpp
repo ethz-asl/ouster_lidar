@@ -40,17 +40,11 @@ struct client {
 namespace {
 
 const std::array<std::pair<lidar_mode, std::string>, 5> lidar_mode_strings = {
-    {{MODE_512x10, "512x10"},
-     {MODE_512x20, "512x20"},
-     {MODE_1024x10, "1024x10"},
-     {MODE_1024x20, "1024x20"},
-     {MODE_2048x10, "2048x10"}}};
-
-const std::array<std::pair<timestamp_mode, std::string>, 3>
-    timestamp_mode_strings = {
-        {{TIME_FROM_INTERNAL_OSC, "TIME_FROM_INTERNAL_OSC"},
-         {TIME_FROM_SYNC_PULSE_IN, "TIME_FROM_SYNC_PULSE_IN"},
-         {TIME_FROM_PTP_1588, "TIME_FROM_PTP_1588"}}};
+    {{lidar_mode::MODE_512x10, "512x10"},
+     {lidar_mode::MODE_512x20, "512x20"},
+     {lidar_mode::MODE_1024x10, "1024x10"},
+     {lidar_mode::MODE_1024x20, "1024x20"},
+     {lidar_mode::MODE_2048x10, "2048x10"}}};
 
 int32_t get_sock_port(int sock_fd) {
     struct sockaddr_storage ss;
@@ -69,7 +63,7 @@ int32_t get_sock_port(int sock_fd) {
         return -1;
 }
 
-int udp_data_socket(int port) {
+static int udp_data_socket(int port) {
     struct addrinfo hints, *info_start, *ai;
 
     memset(&hints, 0, sizeof hints);
@@ -121,7 +115,7 @@ int udp_data_socket(int port) {
     return sock_fd;
 }
 
-int cfg_socket(const char* addr) {
+static int cfg_socket(const char* addr) {
     struct addrinfo hints, *info_start, *ai;
 
     memset(&hints, 0, sizeof hints);
@@ -238,18 +232,18 @@ lidar_mode lidar_mode_of_string(const std::string& s) {
                                 return p.second == s;
                             });
 
-    return res == end ? lidar_mode(0) : res->first;
+    return res == end ? lidar_mode::MODE_INVALID : res->first;
 }
 
 int n_cols_of_lidar_mode(lidar_mode mode) {
     switch (mode) {
-        case MODE_512x10:
-        case MODE_512x20:
+        case lidar_mode::MODE_512x10:
+        case lidar_mode::MODE_512x20:
             return 512;
-        case MODE_1024x10:
-        case MODE_1024x20:
+        case lidar_mode::MODE_1024x10:
+        case lidar_mode::MODE_1024x20:
             return 1024;
-        case MODE_2048x10:
+        case lidar_mode::MODE_2048x10:
             return 2048;
         default:
             throw std::invalid_argument{"n_cols_of_lidar_mode"};
@@ -297,7 +291,7 @@ sensor_info parse_metadata(const std::string& meta) {
             throw std::runtime_error{errors.c_str()};
     }
 
-    sensor_info info = {"UNKNOWN", "UNKNOWN", {}, lidar_mode(0),
+    sensor_info info = {"UNKNOWN", "UNKNOWN", {}, lidar_mode::MODE_INVALID,
                         {},        {},        {}, {}};
     info.hostname = root["hostname"].asString();
     info.sn = root["prod_sn"].asString();
@@ -343,7 +337,7 @@ std::shared_ptr<client> init_client(int lidar_port, int imu_port) {
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
                                     lidar_mode mode, timestamp_mode ts_mode,
-                                    int lidar_port, int imu_port) {
+                                    const uint16_t lidar_port, uint16_t imu_port) {
     auto cli = init_client(lidar_port, imu_port);
     if (!cli) return std::shared_ptr<client>();
 
@@ -435,10 +429,10 @@ client_state poll_client(const client& c, const int timeout_sec) {
 
     client_state res = client_state(0);
     if (retval == -1 && errno == EINTR) {
-        res = EXIT;
+        res = client_state::EXIT;
     } else if (retval == -1) {
         std::cerr << "select: " << std::strerror(errno) << std::endl;
-        res = client_state(res | ERROR);
+        res = client_state(res | client_state::ERROR);
     } else if (retval) {
         if (FD_ISSET(c.lidar_fd, &rfds)) res = client_state(res | LIDAR_DATA);
         if (FD_ISSET(c.imu_fd, &rfds)) res = client_state(res | IMU_DATA);
