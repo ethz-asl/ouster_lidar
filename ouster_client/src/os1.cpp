@@ -46,6 +46,12 @@ const std::array<std::pair<lidar_mode, std::string>, 5> lidar_mode_strings = {
      {lidar_mode::MODE_1024x20, "1024x20"},
      {lidar_mode::MODE_2048x10, "2048x10"}}};
 
+const std::array<std::pair<timestamp_mode, std::string>, 3>
+    timestamp_mode_strings = {
+        {{TIME_FROM_INTERNAL_OSC, "TIME_FROM_INTERNAL_OSC"},
+         {TIME_FROM_SYNC_PULSE_IN, "TIME_FROM_SYNC_PULSE_IN"},
+         {TIME_FROM_PTP_1588, "TIME_FROM_PTP_1588"}}};
+
 int32_t get_sock_port(int sock_fd) {
     struct sockaddr_storage ss;
     socklen_t addrlen = sizeof ss;
@@ -337,7 +343,7 @@ std::shared_ptr<client> init_client(int lidar_port, int imu_port) {
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
                                     lidar_mode mode, timestamp_mode ts_mode,
-                                    const uint16_t lidar_port, uint16_t imu_port) {
+                                    int lidar_port, int imu_port) {
     auto cli = init_client(lidar_port, imu_port);
     if (!cli) return std::shared_ptr<client>();
 
