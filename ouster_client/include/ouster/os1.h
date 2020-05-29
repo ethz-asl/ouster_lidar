@@ -38,7 +38,8 @@ enum class lidar_mode {
 enum class timestamp_mode {
     TIME_FROM_INTERNAL_OSC = 1,
     TIME_FROM_SYNC_PULSE_IN,
-    TIME_FROM_PTP_1588
+    TIME_FROM_PTP_1588,
+    MODE_INVALID
 };
 
 struct version {

@@ -199,10 +199,10 @@ int main(int argc, char** argv) {
     }
 
     if (not timestamp_mode.size()) {
-        timestamp_mode = OS1::to_string(OS1::TIME_FROM_INTERNAL_OSC);
+        timestamp_mode = OS1::to_string(OS1::timestamp_mode::TIME_FROM_INTERNAL_OSC);
     }
 
-    if (!OS1::timestamp_mode_of_string(timestamp_mode)) {
+    if (OS1::timestamp_mode_of_string(timestamp_mode) == OS1::timestamp_mode::MODE_INVALID) {
         ROS_ERROR("Invalid timestamp mode %s", timestamp_mode.c_str());
         return EXIT_FAILURE;
     }

@@ -275,7 +275,7 @@ timestamp_mode timestamp_mode_of_string(const std::string& s) {
                          return p.second == s;
                      });
 
-    return res == end ? timestamp_mode(0) : res->first;
+    return res == end ? timestamp_mode::MODE_INVALID : res->first;
 }
 
 std::string get_metadata(const client& cli) {

@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
                   << " UDP Destination:" << os1_udp_dest << std::endl;
         cli =
             OS1::init_client(os1_host, os1_udp_dest, mode,
-                             OS1::TIME_FROM_INTERNAL_OSC, lidar_port, imu_port);
+                             OS1::timestamp_mode::TIME_FROM_INTERNAL_OSC, lidar_port, imu_port);
     } else {
         if (lidar_port == 0) lidar_port = 7502;
         if (imu_port == 0) imu_port = 7503;
