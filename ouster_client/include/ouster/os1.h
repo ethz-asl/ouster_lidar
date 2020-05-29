@@ -35,6 +35,13 @@ enum class lidar_mode {
     MODE_INVALID
 };
 
+enum class timestamp_mode {
+    TIME_FROM_INTERNAL_OSC = 1,
+    TIME_FROM_SYNC_PULSE_IN,
+    TIME_FROM_PTP_1588,
+    MODE_INVALID
+};
+
 struct version {
     int16_t major;
     int16_t minor;
@@ -108,6 +115,20 @@ lidar_mode lidar_mode_of_string(const std::string& s);
 int n_cols_of_lidar_mode(lidar_mode mode);
 
 /**
+ * Get string representation of a timestamp mode
+ * @param timestamp_mode
+ * @return string representation of the timestamp mode, or "UNKNOWN"
+ */
+std::string to_string(timestamp_mode mode);
+
+/**
+ * Get timestamp mode from string
+ * @param string
+ * @return timestamp mode corresponding to the string, or 0 on error
+ */
+timestamp_mode timestamp_mode_of_string(const std::string& s);
+
+/**
  * Listen for OS1 data on the specified ports
  * @param lidar_port port on which the sensor will send lidar data
  * @param imu_port port on which the sensor will send imu data
@@ -126,8 +147,8 @@ std::shared_ptr<client> init_client(int lidar_port = 7502, int imu_port = 7503);
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
                                     lidar_mode mode = lidar_mode::MODE_1024x10,
-                                    const uint16_t lidar_port = 7502u,
-                                    const uint16_t imu_port = 7503u);
+                                    timestamp_mode ts_mode = timestamp_mode::TIME_FROM_INTERNAL_OSC,
+                                    int lidar_port = 7502u, int imu_port = 7503u);
 
 /**
  * Block for up to timeout_sec until either data is ready or an error occurs.
@@ -167,8 +188,7 @@ std::string get_metadata(const client& cli);
 /**
  * Parse metadata text blob from the sensor into a sensor_info struct. String
  * and vector fields will have size 0 if the parameter cannot be found or
- * parsed,
- * while lidar_mode will be set to 0 (invalid).
+ * parsed, while lidar_mode will be set to 0 (invalid)
  * @throw runtime_error if the text is not valid json
  * @param metadata a text blob returned by get_metadata above
  * @return a sensor_info struct populated with a subset of the metadata
